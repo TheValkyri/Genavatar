@@ -90,21 +90,40 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
           </button>
         )}
 
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('badge');
-            if (!studentBadge.enabled) onUpdateStudentBadge({ enabled: true });
-          }}
-          className={`ml-auto flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-            activeTab === 'badge' || studentBadge.enabled
-              ? 'bg-zinc-800 text-amber-300 border border-amber-500/30'
-              : 'text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          <Tag className="w-3.5 h-3.5" />
-          {studentBadge.enabled ? 'Tên & Lớp: Bật' : 'Tên & Lớp'}
-        </button>
+        <div className="ml-auto flex items-center gap-1 bg-zinc-950/60 p-0.5 rounded-lg border border-zinc-800/60">
+          <button
+            type="button"
+            onClick={() => setActiveTab('badge')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
+              activeTab === 'badge'
+                ? 'bg-zinc-800 text-amber-300 shadow-xs'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Tag className="w-3.5 h-3.5" />
+            Tên & Lớp
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const nextState = !studentBadge.enabled;
+              onUpdateStudentBadge({ enabled: nextState });
+              if (nextState) {
+                setActiveTab('badge');
+              }
+            }}
+            title={studentBadge.enabled ? "Bấm để tắt in Tên & Lớp" : "Bấm để bật in Tên & Lớp"}
+            className={`px-2 py-1 rounded-md text-[10px] font-semibold tracking-wide uppercase transition cursor-pointer ${
+              studentBadge.enabled
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'
+            }`}
+          >
+            {studentBadge.enabled ? 'Bật' : 'Tắt'}
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: CHỈNH ẢNH (Transform + Tone) */}
@@ -281,48 +300,88 @@ export const ControlsPanel: React.FC<ControlsPanelProps> = ({
 
       {/* TAB 3: TÊN & LỚP (Student Badge) */}
       {activeTab === 'badge' && (
-        <div className="space-y-2.5 p-2 rounded-xl bg-zinc-950/60 border border-zinc-800/80 animate-fade-in text-xs">
+        <div className="space-y-3 p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 animate-fade-in text-xs">
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 font-medium text-amber-300 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={studentBadge.enabled}
-                onChange={(e) => onUpdateStudentBadge({ enabled: e.target.checked })}
-                className="w-4 h-4 rounded accent-amber-500"
+            <div>
+              <span className="font-medium text-amber-300 block">Huy hiệu Tên & Lớp</span>
+              <span className="text-[11px] text-zinc-500">In họ tên, lớp & niên khóa ở chân avatar</span>
+            </div>
+
+            {/* iOS style toggle switch */}
+            <button
+              type="button"
+              onClick={() => onUpdateStudentBadge({ enabled: !studentBadge.enabled })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer focus:outline-none ${
+                studentBadge.enabled ? 'bg-amber-500' : 'bg-zinc-800'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-md ${
+                  studentBadge.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
               />
-              In Tên & Lớp lên ảnh
-            </label>
+            </button>
           </div>
 
-          {studentBadge.enabled && (
-            <div className="space-y-2 pt-1 border-t border-zinc-800/80">
-              <input
-                type="text"
-                placeholder="Họ và Tên (VD: Nguyễn Văn A)"
-                maxLength={28}
-                value={studentBadge.fullName}
-                onChange={(e) => onUpdateStudentBadge({ fullName: e.target.value })}
-                className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
-              />
-
-              <div className="grid grid-cols-2 gap-2">
+          {studentBadge.enabled ? (
+            <div className="space-y-2.5 pt-2 border-t border-zinc-800/80">
+              <div>
+                <label className="text-[11px] text-zinc-400 block mb-1">Họ và tên học sinh:</label>
                 <input
                   type="text"
-                  placeholder="Lớp (VD: 12A1)"
-                  maxLength={10}
-                  value={studentBadge.className}
-                  onChange={(e) => onUpdateStudentBadge({ className: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
-                />
-                <input
-                  type="text"
-                  placeholder="Niên khóa"
-                  maxLength={15}
-                  value={studentBadge.schoolYear}
-                  onChange={(e) => onUpdateStudentBadge({ schoolYear: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
+                  placeholder="VD: Nguyễn Văn A"
+                  maxLength={28}
+                  value={studentBadge.fullName}
+                  onChange={(e) => onUpdateStudentBadge({ fullName: e.target.value })}
+                  className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] text-zinc-400 block mb-1">Lớp:</label>
+                  <input
+                    type="text"
+                    placeholder="VD: 12A1"
+                    maxLength={10}
+                    value={studentBadge.className}
+                    onChange={(e) => onUpdateStudentBadge({ className: e.target.value })}
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-zinc-400 block mb-1">Niên khóa:</label>
+                  <input
+                    type="text"
+                    placeholder="VD: 2026 - 2027"
+                    maxLength={15}
+                    value={studentBadge.schoolYear}
+                    onChange={(e) => onUpdateStudentBadge({ schoolYear: e.target.value })}
+                    className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-amber-500/50"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-1 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => onUpdateStudentBadge({ enabled: false })}
+                  className="text-[11px] text-zinc-400 hover:text-red-400 transition cursor-pointer py-1 px-2.5 rounded hover:bg-zinc-900 flex items-center gap-1"
+                >
+                  ✕ Tắt không in huy hiệu này
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4 bg-zinc-900/40 rounded-lg border border-dashed border-zinc-800 text-zinc-400 text-xs flex flex-col items-center gap-2">
+              <span>Huy hiệu Tên & Lớp đang tắt (không in lên ảnh).</span>
+              <button
+                type="button"
+                onClick={() => onUpdateStudentBadge({ enabled: true })}
+                className="py-1 px-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-medium rounded-lg text-xs border border-amber-500/30 transition cursor-pointer"
+              >
+                Bật in Tên & Lớp
+              </button>
             </div>
           )}
         </div>
