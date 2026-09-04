@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import type { FrameTemplate, LogoSettings, StudentBadgeSettings, ImageAdjustments, ActiveLayer } from '../types';
 import { SCHOOL_LOGO_PATH } from '../constants/templates';
-import { Image as ImageIcon, School, Move, RotateCw, FlipHorizontal, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { Image as ImageIcon, School, RotateCw, FlipHorizontal, RotateCcw } from 'lucide-react';
 
 interface AvatarCanvasProps {
   userImage: HTMLImageElement | null;
@@ -88,7 +88,6 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
     }
   ) => {
     const center = size / 2;
-    // Circular clip radius (ensures avatar fills the frame hole)
     const innerRadius = size * 0.385;
 
     ctx.clearRect(0, 0, size, size);
@@ -103,10 +102,8 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
       ctx.closePath();
       ctx.clip();
 
-      // Brightness & Contrast
       ctx.filter = `brightness(${opts.adjust.brightness}%) contrast(${opts.adjust.contrast}%)`;
 
-      // Matrix transform
       ctx.translate(center + (opts.adjust.panX * size) / 600, center + (opts.adjust.panY * size) / 600);
       ctx.rotate((opts.adjust.rotation * Math.PI) / 180);
       if (opts.adjust.flipH) {
@@ -123,7 +120,6 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
       ctx.drawImage(opts.userImg, -dw / 2, -dh / 2, dw, dh);
       ctx.restore();
     } else {
-      // Clean neutral placeholder
       ctx.save();
       ctx.beginPath();
       ctx.arc(center, center, innerRadius, 0, Math.PI * 2, true);
@@ -132,7 +128,7 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
       ctx.restore();
     }
 
-    // B. Draw Frame Overlay (On top of user avatar)
+    // B. Draw Frame Overlay
     if (opts.frameImg) {
       ctx.save();
       ctx.drawImage(opts.frameImg, 0, 0, size, size);
@@ -152,14 +148,12 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
       }
       ctx.globalAlpha = opts.logo.opacity;
 
-      // Subtle drop shadow
       ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
       ctx.shadowBlur = size * 0.015;
       ctx.shadowOffsetY = size * 0.006;
 
       ctx.drawImage(opts.logoImg, -lSize / 2, -lSize / 2, lSize, lSize);
 
-      // Draw Interactive Selection Ring (Only in edit mode when active)
       if (opts.isInteractivePreview && activeLayer === 'logo') {
         ctx.shadowColor = 'transparent';
         ctx.globalAlpha = 1;
@@ -171,23 +165,6 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
         ctx.setLineDash([5, 4]);
         ctx.stroke();
         ctx.setLineDash([]);
-
-        const r = lSize / 2 + 4;
-        const handlePts = [
-          { x: 0, y: -r },
-          { x: r, y: 0 },
-          { x: 0, y: r },
-          { x: -r, y: 0 },
-        ];
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#0284c7';
-        ctx.lineWidth = 1.5;
-        handlePts.forEach((pt) => {
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        });
       }
 
       ctx.restore();
@@ -259,7 +236,6 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
     });
   }, [userImage, isFrameLoaded, isLogoLoaded, adjustments, logoSettings, studentBadge, activeLayer, isEmbeddedLogo]);
 
-  // Export methods
   useImperativeHandle(ref, () => ({
     exportImage: (resolution = 1080, format = 'image/png') => {
       const offscreen = document.createElement('canvas');
@@ -312,7 +288,6 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
     },
   }));
 
-  // Helper: check if pointer hit the logo
   const checkLogoHit = (canvasClientX: number, canvasClientY: number): boolean => {
     if (isEmbeddedLogo || !logoSettings.enabled || !canvasRef.current) return false;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -324,7 +299,6 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
     return dist <= logoRadiusRel * 1.25;
   };
 
-  // =================== INTERACTION (Mouse & Touch) ===================
   const handlePointerDown = (clientX: number, clientY: number) => {
     isDragging.current = true;
     dragStart.current = { x: clientX, y: clientY };
@@ -361,7 +335,6 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
     isDragging.current = false;
   };
 
-  // Mouse Handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     handlePointerDown(e.clientX, e.clientY);
   };
@@ -382,7 +355,6 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
     }
   };
 
-  // Touch Handlers for Mobile
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (e.touches.length === 1) {
       handlePointerDown(e.touches[0].clientX, e.touches[0].clientY);
@@ -418,51 +390,43 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
   };
 
   return (
-    <div className="w-full max-w-[440px] mx-auto space-y-2.5 select-none">
-      {/* 1. LAYER SWITCHER PILL */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-1 p-1 bg-zinc-900/90 rounded-xl border border-zinc-800 text-xs shadow-inner">
-          <button
-            type="button"
-            onClick={() => setActiveLayer('photo')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
-              activeLayer === 'photo'
-                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700/80'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <ImageIcon className="w-3.5 h-3.5" />
-            Ảnh Chân Dung
-          </button>
-
-          {!isEmbeddedLogo ? (
+    <div className="w-full max-w-[420px] mx-auto space-y-2 select-none">
+      {/* Layer Switcher - Only shown when frame does NOT have embedded logo */}
+      {!isEmbeddedLogo && (
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1 p-0.5 bg-zinc-900 rounded-lg border border-zinc-800 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setActiveLayer('photo')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
+                activeLayer === 'photo'
+                  ? 'bg-zinc-800 text-white shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <ImageIcon className="w-3 h-3" />
+              Ảnh
+            </button>
             <button
               type="button"
               onClick={() => setActiveLayer('logo')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
                 activeLayer === 'logo'
-                  ? 'bg-zinc-800 text-sky-400 shadow-sm border border-sky-500/30'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-zinc-800 text-sky-400 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              <School className="w-3.5 h-3.5" />
-              Logo Trường
+              <School className="w-3 h-3" />
+              Logo
             </button>
-          ) : (
-            <span className="flex items-center gap-1 px-2.5 py-1 text-[11px] text-zinc-500 font-mono">
-              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-              Logo: Đã in sẵn
-            </span>
-          )}
+          </div>
+          <span className="text-[10px] text-zinc-500 font-mono">
+            {activeLayer === 'logo' ? 'Chạm giữ để kéo Logo' : 'Kéo để chỉnh Ảnh'}
+          </span>
         </div>
+      )}
 
-        <div className="flex items-center gap-1 text-[11px] text-zinc-500 font-mono">
-          <Move className="w-3 h-3 text-zinc-400" />
-          {activeLayer === 'logo' && !isEmbeddedLogo ? 'Kéo để chỉnh vị trí Logo' : 'Kéo để căn chỉnh Ảnh'}
-        </div>
-      </div>
-
-      {/* 2. STUDIO CANVAS CONTAINER */}
+      {/* Canvas Artboard */}
       <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-[#090a0f] border border-zinc-800 shadow-2xl flex items-center justify-center">
         <canvas
           ref={canvasRef}
@@ -479,36 +443,31 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
           onTouchEnd={handlePointerUp}
         />
 
-        {/* Empty State */}
+        {/* Minimalist Empty State */}
         {!userImage && (
           <div
             onClick={onUploadClick}
-            className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center cursor-pointer bg-zinc-950/70 backdrop-blur-xs transition hover:bg-zinc-950/50"
+            className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center cursor-pointer bg-zinc-950/60 backdrop-blur-xs transition hover:bg-zinc-950/40"
           >
-            <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-3 shadow-md group-hover:border-zinc-700 transition">
-              <ImageIcon className="w-6 h-6 text-zinc-400" />
+            <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-2 shadow-xs">
+              <ImageIcon className="w-5 h-5 text-zinc-400" />
             </div>
-            <p className="font-medium text-zinc-200 text-sm">Chạm để chọn ảnh chân dung</p>
-            <p className="text-[11px] text-zinc-500 mt-1 max-w-[200px]">
-              Tải ảnh khuôn mặt của bạn để ghép vào khung THPT Vĩnh Thuận
-            </p>
+            <p className="font-medium text-zinc-200 text-xs sm:text-sm">Chạm để chọn ảnh chân dung</p>
           </div>
         )}
       </div>
 
-      {/* 3. FLOATING TOOLBAR */}
+      {/* Compact floating tools when image loaded */}
       {userImage && (
-        <div className="flex items-center justify-between px-2 py-1.5 bg-zinc-900/80 rounded-xl border border-zinc-800/80 text-xs text-zinc-400">
-          <span className="text-[11px] font-mono text-zinc-500">
-            {activeLayer === 'photo' || isEmbeddedLogo
-              ? 'Đang căn chỉnh: Ảnh chân dung'
-              : 'Đang căn chỉnh: Logo THPT Vĩnh Thuận'}
+        <div className="flex items-center justify-between px-2 py-1 bg-zinc-900/80 rounded-xl border border-zinc-800/80 text-xs text-zinc-400">
+          <span className="text-[10px] font-mono text-zinc-500">
+            Kéo 1 ngón • Chụm 2 ngón zoom
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={() => onUpdateAdjustments({ rotation: (adjustments.rotation + 90) % 360 })}
-              className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 transition"
+              className="p-1 rounded hover:bg-zinc-800 hover:text-zinc-200 transition"
               title="Xoay 90°"
             >
               <RotateCw className="w-3.5 h-3.5" />
@@ -516,7 +475,7 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
             <button
               type="button"
               onClick={() => onUpdateAdjustments({ flipH: !adjustments.flipH })}
-              className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 transition"
+              className="p-1 rounded hover:bg-zinc-800 hover:text-zinc-200 transition"
               title="Lật gương"
             >
               <FlipHorizontal className="w-3.5 h-3.5" />
@@ -526,7 +485,7 @@ export const AvatarCanvas = forwardRef<AvatarCanvasRef, AvatarCanvasProps>(({
               onClick={() =>
                 onUpdateAdjustments({ panX: 0, panY: 0, zoom: 1.0, rotation: 0, flipH: false })
               }
-              className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 transition"
+              className="p-1 rounded hover:bg-zinc-800 hover:text-zinc-200 transition"
               title="Căn giữa lại"
             >
               <RotateCcw className="w-3.5 h-3.5" />

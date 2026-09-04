@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Share2, X, Check, Smartphone } from 'lucide-react';
+import { Download, Share2, X, Check, AlertTriangle, Copy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ExportModalProps {
@@ -17,6 +17,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [resolution, setResolution] = useState<1080 | 2048>(1080);
   const [fileFormat, setFileFormat] = useState<'image/png' | 'image/jpeg'>('image/png');
 
@@ -38,7 +39,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (!blob) return;
 
       const ext = fileFormat === 'image/jpeg' ? 'jpg' : 'png';
-      const filename = `Avatar_THPT_VinhThuan_${resolution}p_${Date.now()}.${ext}`;
+      const filename = `Avatar_THPT_VinhThuan_${Date.now()}.${ext}`;
 
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -58,6 +59,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
   };
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
+
   const handleShare = async () => {
     try {
       const blob = await getBlob(1080, 'image/png');
@@ -71,21 +78,21 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           files: [file],
         });
       } else {
-        alert('Trình duyệt chưa hỗ trợ chia sẻ trực tiếp file. Vui lòng bấm Tải Về!');
+        handleCopyLink();
       }
     } catch (err) {
-      console.log('Share canceled or error:', err);
+      console.log('Share error:', err);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-      <div className="relative w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-5 shadow-2xl overflow-hidden text-zinc-200 space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+      <div className="relative w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-4 sm:p-5 shadow-2xl overflow-hidden text-zinc-200 space-y-3.5">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+        <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
           <div>
             <h3 className="text-sm font-semibold text-white">Xuất Ảnh Đại Diện</h3>
-            <p className="text-[11px] text-zinc-500 font-mono">Độ phân giải thực: {resolution} × {resolution} px</p>
+            <p className="text-[11px] text-zinc-500 font-mono">{resolution} × {resolution} px</p>
           </div>
           <button
             type="button"
@@ -97,7 +104,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         </div>
 
         {/* High-res Image Preview */}
-        <div className="relative aspect-square max-w-[260px] mx-auto rounded-2xl overflow-hidden border border-zinc-800 shadow-xl bg-black">
+        <div className="relative aspect-square max-w-[240px] mx-auto rounded-2xl overflow-hidden border border-zinc-800 shadow-xl bg-black">
           <img
             src={previewUrl}
             alt="Preview Avatar"
@@ -105,20 +112,24 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           />
         </div>
 
-        {/* Mobile in-app browser notice */}
-        <div className="flex items-start gap-2 p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 text-[11px] text-zinc-400">
-          <Smartphone className="w-3.5 h-3.5 flex-shrink-0 text-zinc-500 mt-0.5" />
-          <span>
-            Người dùng Zalo / Facebook Mobile: Nếu không tải được, chạm giữ 2 giây vào ảnh phía trên rồi chọn <strong className="text-zinc-200">"Lưu hình ảnh"</strong>.
-          </span>
+        {/* ZALO CRASH & DOWNLOAD WARNING BANNER */}
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-1.5">
+          <div className="font-semibold flex items-center gap-1.5 text-amber-300">
+            <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            Lưu ý khi mở bằng Zalo / Facebook:
+          </div>
+          <p className="text-[11px] text-amber-200/90 leading-relaxed">
+            Zalo chặn tải file trực tiếp và <strong>ấn giữ ảnh sẽ bị văng (out) ứng dụng</strong>.
+          </p>
+          <div className="bg-black/40 p-2 rounded-lg text-[11px] text-amber-100 font-medium">
+            👉 Hãy bấm nút <strong>(...)</strong> hoặc <strong>(⋮)</strong> góc trên bên phải màn hình ➔ Chọn <strong>"Mở bằng trình duyệt"</strong> (Chrome / Safari) để lưu ảnh mượt mà!
+          </div>
         </div>
 
         {/* Export Options */}
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div>
-            <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 block mb-1">
-              Độ phân giải
-            </label>
+            <label className="text-[10px] font-mono uppercase text-zinc-500 block mb-1">Độ nét</label>
             <div className="flex bg-zinc-950 p-0.5 rounded-lg border border-zinc-800">
               <button
                 type="button"
@@ -136,15 +147,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   resolution === 2048 ? 'bg-zinc-800 text-white' : 'text-zinc-500'
                 }`}
               >
-                2K (Siêu Nét)
+                2K
               </button>
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] uppercase font-mono tracking-wider text-zinc-500 block mb-1">
-              Định dạng
-            </label>
+            <label className="text-[10px] font-mono uppercase text-zinc-500 block mb-1">Định dạng</label>
             <div className="flex bg-zinc-950 p-0.5 rounded-lg border border-zinc-800">
               <button
                 type="button"
@@ -168,7 +177,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons (Titanium Studio Style) */}
+        {/* Action Buttons */}
         <div className="space-y-2 pt-1">
           <button
             type="button"
@@ -178,7 +187,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           >
             {downloadSuccess ? (
               <>
-                <Check className="w-4 h-4 text-emerald-600" /> Đã Tải Thành Công
+                <Check className="w-4 h-4 text-emerald-600" /> Đã Tải Thành Công!
               </>
             ) : (
               <>
@@ -187,16 +196,36 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             )}
           </button>
 
-          {typeof navigator !== 'undefined' && 'share' in navigator && (
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={handleShare}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700/80 text-zinc-300 text-xs font-medium border border-zinc-700/60 transition cursor-pointer"
+              onClick={handleCopyLink}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-xs transition cursor-pointer"
             >
-              <Share2 className="w-3.5 h-3.5" />
-              Chia sẻ trực tiếp
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedLink ? 'Đã chép link' : 'Sao chép link'}
             </button>
-          )}
+
+            {typeof navigator !== 'undefined' && 'share' in navigator ? (
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-xs transition cursor-pointer"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Chia sẻ
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-xs transition cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Lưu file
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
