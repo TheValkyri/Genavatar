@@ -18,8 +18,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [resolution, setResolution] = useState<1080 | 2048>(1080);
-  const [fileFormat, setFileFormat] = useState<'image/png' | 'image/jpeg'>('image/png');
+  const [resolution] = useState<1080 | 2048>(2048);
+  const [fileFormat] = useState<'image/png' | 'image/jpeg'>('image/png');
 
   if (!isOpen || !previewUrl) return null;
 
@@ -38,7 +38,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       const blob = await getBlob(resolution, fileFormat);
       if (!blob) return;
 
-      const ext = fileFormat === 'image/jpeg' ? 'jpg' : 'png';
+      const ext = 'png';
       const filename = `Avatar_THPT_VinhThuan_${Date.now()}.${ext}`;
 
       const link = document.createElement('a');
@@ -126,55 +126,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
         </div>
 
-        {/* Export Options */}
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <label className="text-[10px] font-mono uppercase text-zinc-500 block mb-1">Độ nét</label>
-            <div className="flex bg-zinc-950 p-0.5 rounded-lg border border-zinc-800">
-              <button
-                type="button"
-                onClick={() => setResolution(1080)}
-                className={`flex-1 py-1 rounded text-center transition cursor-pointer font-medium ${
-                  resolution === 1080 ? 'bg-zinc-800 text-white' : 'text-zinc-500'
-                }`}
-              >
-                1080p
-              </button>
-              <button
-                type="button"
-                onClick={() => setResolution(2048)}
-                className={`flex-1 py-1 rounded text-center transition cursor-pointer font-medium ${
-                  resolution === 2048 ? 'bg-zinc-800 text-white' : 'text-zinc-500'
-                }`}
-              >
-                2K
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-mono uppercase text-zinc-500 block mb-1">Định dạng</label>
-            <div className="flex bg-zinc-950 p-0.5 rounded-lg border border-zinc-800">
-              <button
-                type="button"
-                onClick={() => setFileFormat('image/png')}
-                className={`flex-1 py-1 rounded text-center transition cursor-pointer font-medium ${
-                  fileFormat === 'image/png' ? 'bg-zinc-800 text-white' : 'text-zinc-500'
-                }`}
-              >
-                PNG
-              </button>
-              <button
-                type="button"
-                onClick={() => setFileFormat('image/jpeg')}
-                className={`flex-1 py-1 rounded text-center transition cursor-pointer font-medium ${
-                  fileFormat === 'image/jpeg' ? 'bg-zinc-800 text-white' : 'text-zinc-500'
-                }`}
-              >
-                JPG
-              </button>
-            </div>
-          </div>
+        {/* Auto Quality Indicator */}
+        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-950/70 border border-zinc-800 text-xs text-zinc-400">
+          <span className="flex items-center gap-1.5 font-medium text-white">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Độ nét cao nhất:
+          </span>
+          <span className="font-mono text-emerald-300 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+            2048 × 2048 px (Ultra HD)
+          </span>
         </div>
 
         {/* Action Buttons */}
