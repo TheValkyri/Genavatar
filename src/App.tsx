@@ -18,12 +18,12 @@ export function App() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const canvasRef = useRef<AvatarCanvasRef | null>(null);
 
-  // Detect Zalo or In-App Browser
+  // Detect Zalo or In-App Browser (Zalo, Facebook, Messenger, Instagram, TikTok)
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent || '';
-    if (/zalo|fbav|fban|messenger/i.test(ua)) {
+    if (/zalo|fbav|fban|messenger|instagram|tiktok|threads|micromessenger/i.test(ua)) {
       setIsInAppBrowser(true);
     }
   }, []);
@@ -110,7 +110,28 @@ export function App() {
     if (!canvasRef.current) return;
 
     if (isInAppBrowser) {
-      // In Zalo/Facebook: Open modal with image & save instructions
+      // 1. First attempt native Web Share API with file:
+      // If the mobile OS supports saving directly without 3 dots, this triggers the native Save Image sheet!
+      try {
+        const blob = await canvasRef.current.getBlob(2048, 'image/png');
+        if (blob && typeof navigator !== 'undefined' && navigator.canShare) {
+          const file = new File([blob], `Avatar_THPT_VinhThuan_${Date.now()}.png`, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: 'Avatar THPT Vĩnh Thuận',
+              text: 'Ảnh đại diện chào năm học mới THPT Vĩnh Thuận 2026 - 2027',
+              files: [file],
+            });
+            setDownloadSuccess(true);
+            setTimeout(() => setDownloadSuccess(false), 4000);
+            return;
+          }
+        }
+      } catch (shareErr) {
+        console.log('Direct share not supported or dismissed:', shareErr);
+      }
+
+      // 2. If share not supported or dismissed: open the prominent 3-dots guide modal
       const dataUrl = canvasRef.current.exportImage(2048, 'image/png');
       if (dataUrl) {
         setExportedImageUrl(dataUrl);
@@ -171,22 +192,32 @@ export function App() {
         className="hidden"
       />
 
-      {/* ZALO ALERT BANNER */}
+      {/* ZALO / IN-APP BROWSER PROMINENT NOTIFICATION BANNER */}
       {isInAppBrowser && (
-        <div className="bg-amber-500/15 border-b border-amber-500/30 px-3 py-2 text-amber-200 text-xs flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-            <span className="truncate">
-              Đang mở trên Zalo: Bấm <strong>(...)</strong> góc trên ➔ Chọn <strong>"Mở bằng trình duyệt"</strong> để lưu ảnh!
-            </span>
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-zinc-950 px-3.5 py-3 shadow-xl sticky top-0 z-50 border-b-2 border-amber-300">
+          <div className="max-w-md mx-auto flex items-start gap-2.5">
+            <div className="p-1 rounded-full bg-black/20 text-white flex-shrink-0 mt-0.5 animate-bounce">
+              <AlertTriangle className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex-1 text-xs">
+              <div className="flex items-center justify-between font-black tracking-wide text-zinc-950 uppercase text-[11px] mb-0.5">
+                <span>Chú Ý: Đang Mở Bằng Zalo</span>
+                <span className="font-mono text-white bg-black/30 px-1.5 py-0.5 rounded text-[10px] animate-pulse">
+                  Góc Trên Phải ↗️
+                </span>
+              </div>
+              <p className="text-zinc-950 font-medium text-[11.5px] leading-tight">
+                Để tải ảnh về máy không bị lỗi, bạn hãy bấm vào <strong>dấu 3 chấm (...)</strong> ở góc trên bên phải màn hình ➔ Chọn <strong>"Mở bằng trình duyệt"</strong> (Safari / Chrome).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsInAppBrowser(false)}
+              className="text-[11px] font-bold text-black/70 hover:text-black flex-shrink-0 p-1"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsInAppBrowser(false)}
-            className="text-[10px] text-amber-400 hover:text-white flex-shrink-0"
-          >
-            Đóng
-          </button>
         </div>
       )}
 
@@ -260,6 +291,22 @@ export function App() {
               </div>
             </div>
 
+            {/* Prominent Zalo Warning inside workspace */}
+            {isInAppBrowser && (
+              <div className="p-3 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-amber-200 text-xs space-y-1">
+                <div className="flex items-center justify-between font-bold text-amber-300">
+                  <span className="flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                    CHÚ Ý KHI TẢI ẢNH TRÊN ZALO
+                  </span>
+                  <span className="text-amber-400 text-[11px] font-mono animate-pulse">↗️ Dấu (...)</span>
+                </div>
+                <p className="text-[11px] text-amber-100 leading-relaxed">
+                  Zalo chặn lưu file. Vui lòng bấm vào <strong>dấu 3 chấm (...) ở góc trên cùng bên phải</strong> ➔ chọn <strong>"Mở bằng trình duyệt"</strong> để lưu ảnh HD vào thư viện ảnh máy bạn!
+                </p>
+              </div>
+            )}
+
             {/* Success Download Toast (temporary) */}
             {downloadSuccess && (
               <div className="p-2.5 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sky-200 text-xs text-center font-medium animate-fade-in">
@@ -323,6 +370,7 @@ export function App() {
         onClose={() => setIsExportOpen(false)}
         previewUrl={exportedImageUrl}
         getBlob={getExportBlob}
+        isInAppBrowser={isInAppBrowser}
       />
     </div>
   );
