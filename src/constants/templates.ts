@@ -1,0 +1,88 @@
+import type { FrameTemplate } from '../types';
+
+export const FRAME_TEMPLATES: FrameTemplate[] = [
+  {
+    id: 'frame-official-vinh-thuan',
+    name: 'Khung Chính Thức 2026 - 2027',
+    category: 'official',
+    src: '/frames/frame_0_vinh_thuan_chinh_thuc.png',
+    badgeText: 'Khung Chính Thức',
+    description: 'Mẫu khung chính thức THPT Vĩnh Thuận chào năm học mới 2026 - 2027 (Đã có sẵn logo)',
+    hasEmbeddedLogo: true,
+    isOfficial: true,
+  },
+  {
+    id: 'frame-1',
+    name: 'Khai Giảng Rực Rỡ',
+    category: 'student',
+    src: '/frames/frame_1_khai_giang.png',
+    badgeText: 'Khai giảng',
+    description: 'Cờ đỏ sao vàng, hoa hướng dương và ruy băng rực rỡ',
+    hasEmbeddedLogo: false,
+  },
+  {
+    id: 'frame-2',
+    name: 'Ước Mơ Học Trò',
+    category: 'student',
+    src: '/frames/frame_2_may_bay_giay.png',
+    badgeText: 'Ước mơ',
+    description: 'Máy bay giấy, sách vở và ngôi sao hy vọng',
+    hasEmbeddedLogo: false,
+  },
+  {
+    id: 'frame-3',
+    name: 'Chào Năm Học Mới',
+    category: 'student',
+    src: '/frames/frame_3_chao_nam_hoc_moi.png',
+    badgeText: 'Chào 2025',
+    description: 'Cờ Tổ quốc, dải lụa đỏ và hoa trắng tinh khôi',
+    hasEmbeddedLogo: false,
+  },
+  {
+    id: 'frame-4',
+    name: 'Mái Trường Mến Yêu',
+    category: 'student',
+    src: '/frames/frame_4_mai_truong.png',
+    badgeText: 'Mái trường',
+    description: 'Hình ảnh ngôi trường ngói đỏ, cột cờ và sách bút',
+    hasEmbeddedLogo: false,
+  },
+  {
+    id: 'frame-5',
+    name: 'Niên Khóa Mới',
+    category: 'student',
+    src: '/frames/frame_5_nien_khoa_moi.png',
+    badgeText: '2025 - 2026',
+    description: 'Dải băng đỏ sao vàng và cành hoa thanh lịch',
+    hasEmbeddedLogo: false,
+  },
+  {
+    id: 'frame-6',
+    name: 'Back to School',
+    category: 'student',
+    src: '/frames/frame_6_back_to_school.png',
+    badgeText: 'Back to School',
+    description: 'Nơ đỏ xinh xắn, máy bay giấy và sao lấp lánh',
+    hasEmbeddedLogo: false,
+  },
+  {
+    id: 'frame-7',
+    name: 'Kỷ Niệm 1979 Vĩnh Thuận',
+    category: 'ceremony',
+    src: '/frames/frame_7_vinh_thuan_royal_gold.png',
+    badgeText: 'Kỷ niệm 1979',
+    description: 'Tone Navy & Vàng Gold sang trọng, vòng nguyệt quế vinh danh',
+    hasEmbeddedLogo: false,
+  },
+  {
+    id: 'frame-8',
+    name: 'Tự Hào Vĩnh Thuận',
+    category: 'ceremony',
+    src: '/frames/frame_8_tu_hao_vinh_thuan.png',
+    badgeText: 'Tri Thức - Sáng Tạo',
+    description: 'Tone Đỏ - Xanh hiện đại, thể hiện bản lĩnh thanh niên thế hệ mới',
+    hasEmbeddedLogo: false,
+  }
+];
+
+export const SCHOOL_LOGO_PATH = '/logos/logo_thpt_vinh_thuan.png';
