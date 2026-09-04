@@ -11,20 +11,44 @@ import {
   RotateCcw,
   Sparkles,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink,
+  Copy,
+  Check
 } from 'lucide-react';
 
 export function App() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const canvasRef = useRef<AvatarCanvasRef | null>(null);
 
-  // Detect Zalo or In-App Browser (Zalo, Facebook, Messenger, Instagram, TikTok)
+  // Detect In-App Browser and Device OS
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const [deviceType, setDeviceType] = useState<'android' | 'ios' | 'other'>('other');
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent || '';
+    const isAndroidDevice = /android/i.test(ua);
+    const isIOSDevice = /iphone|ipad|ipod/i.test(ua);
+
+    if (isAndroidDevice) {
+      setDeviceType('android');
+    } else if (isIOSDevice) {
+      setDeviceType('ios');
+    }
+
     if (/zalo|fbav|fban|messenger|instagram|tiktok|threads|micromessenger/i.test(ua)) {
       setIsInAppBrowser(true);
+
+      // On Android: Attempt automatic Chrome intent redirect
+      if (isAndroidDevice && !window.location.hash.includes('inapp')) {
+        try {
+          const currentUrl = window.location.href.replace(/https?:\/\//, '');
+          window.location.href = `intent://${currentUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+        } catch (e) {
+          console.log('Auto intent redirect not triggered:', e);
+        }
+      }
     }
   }, []);
 
@@ -103,6 +127,26 @@ export function App() {
       brightness: 100,
       contrast: 100,
     });
+  };
+
+  const handleOpenExternalBrowser = () => {
+    const currentUrl = window.location.href.replace(/https?:\/\//, '');
+    if (deviceType === 'android') {
+      window.location.href = `intent://${currentUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+    } else if (deviceType === 'ios') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 3000);
+      try {
+        window.location.href = `googlechromes://${currentUrl}`;
+      } catch {
+        // Fallback
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 3000);
+    }
   };
 
   // Instant 2048px Ultra HD Download or Fallback Modal for Zalo
@@ -195,28 +239,57 @@ export function App() {
       {/* ZALO / IN-APP BROWSER PROMINENT NOTIFICATION BANNER */}
       {isInAppBrowser && (
         <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-zinc-950 px-3.5 py-3 shadow-xl sticky top-0 z-50 border-b-2 border-amber-300">
-          <div className="max-w-md mx-auto flex items-start gap-2.5">
-            <div className="p-1 rounded-full bg-black/20 text-white flex-shrink-0 mt-0.5 animate-bounce">
-              <AlertTriangle className="w-4 h-4 text-white" />
-            </div>
-            <div className="flex-1 text-xs">
-              <div className="flex items-center justify-between font-black tracking-wide text-zinc-950 uppercase text-[11px] mb-0.5">
-                <span>Chú Ý: Đang Mở Bằng Zalo</span>
-                <span className="font-mono text-white bg-black/30 px-1.5 py-0.5 rounded text-[10px] animate-pulse">
-                  Góc Trên Phải ↗️
-                </span>
+          <div className="max-w-md mx-auto space-y-2">
+            <div className="flex items-start gap-2.5">
+              <div className="p-1 rounded-full bg-black/20 text-white flex-shrink-0 mt-0.5 animate-bounce">
+                <AlertTriangle className="w-4 h-4 text-white" />
               </div>
-              <p className="text-zinc-950 font-medium text-[11.5px] leading-tight">
-                Để tải ảnh về máy không bị lỗi, bạn hãy bấm vào <strong>dấu 3 chấm (...)</strong> ở góc trên bên phải màn hình ➔ Chọn <strong>"Mở bằng trình duyệt"</strong> (Safari / Chrome).
-              </p>
+              <div className="flex-1 text-xs">
+                <div className="flex items-center justify-between font-black tracking-wide text-zinc-950 uppercase text-[11px] mb-0.5">
+                  <span>Chú Ý: Đang Mở Bằng Zalo</span>
+                  <span className="font-mono text-white bg-black/30 px-1.5 py-0.5 rounded text-[10px] animate-pulse">
+                    Góc Trên Phải ↗️
+                  </span>
+                </div>
+                <p className="text-zinc-950 font-medium text-[11.5px] leading-tight">
+                  {deviceType === 'android' ? (
+                    <>Để tải ảnh về máy không bị lỗi, bạn có thể <strong>bấm nút mở Chrome bên dưới</strong> hoặc ấn <strong>dấu 3 chấm (...) góc trên phải</strong> ➔ "Mở bằng trình duyệt".</>
+                  ) : (
+                    <>iPhone trên Zalo cần ấn vào <strong>dấu 3 chấm (...) ở góc trên cùng bên phải màn hình</strong> ➔ Chọn <strong>"Mở bằng trình duyệt"</strong> (Safari) để lưu ảnh!</>
+                  )}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsInAppBrowser(false)}
+                className="text-[11px] font-bold text-black/70 hover:text-black flex-shrink-0 p-1 cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsInAppBrowser(false)}
-              className="text-[11px] font-bold text-black/70 hover:text-black flex-shrink-0 p-1"
-            >
-              ✕
-            </button>
+
+            {/* Quick Action Buttons inside Banner */}
+            <div className="flex items-center gap-2 pt-0.5">
+              {deviceType === 'android' ? (
+                <button
+                  type="button"
+                  onClick={handleOpenExternalBrowser}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-zinc-950 text-white font-bold text-[11px] shadow-sm hover:bg-zinc-900 transition cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
+                  Mở Thẳng Bằng Google Chrome
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleOpenExternalBrowser}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-zinc-950 text-white font-bold text-[11px] shadow-sm hover:bg-zinc-900 transition cursor-pointer"
+                >
+                  {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-300" />}
+                  {copiedLink ? 'Đã Chép! Mở Safari Dán Vào' : 'Sao Chép Link Để Dán Vào Safari'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -293,17 +366,36 @@ export function App() {
 
             {/* Prominent Zalo Warning inside workspace */}
             {isInAppBrowser && (
-              <div className="p-3 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-amber-200 text-xs space-y-1">
+              <div className="p-3.5 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-amber-200 text-xs space-y-2">
                 <div className="flex items-center justify-between font-bold text-amber-300">
                   <span className="flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                    CHÚ Ý KHI TẢI ẢNH TRÊN ZALO
+                    LƯU Ý KHI TẢI ẢNH TRÊN ZALO
                   </span>
                   <span className="text-amber-400 text-[11px] font-mono animate-pulse">↗️ Dấu (...)</span>
                 </div>
-                <p className="text-[11px] text-amber-100 leading-relaxed">
-                  Zalo chặn lưu file. Vui lòng bấm vào <strong>dấu 3 chấm (...) ở góc trên cùng bên phải</strong> ➔ chọn <strong>"Mở bằng trình duyệt"</strong> để lưu ảnh HD vào thư viện ảnh máy bạn!
+                <p className="text-[11.5px] text-amber-100 leading-relaxed">
+                  Zalo chặn tải file. Vui lòng bấm vào <strong>dấu 3 chấm (...) ở góc trên cùng bên phải</strong> ➔ chọn <strong>"Mở bằng trình duyệt"</strong> (Safari/Chrome) để lưu ảnh HD!
                 </p>
+                {deviceType === 'android' ? (
+                  <button
+                    type="button"
+                    onClick={handleOpenExternalBrowser}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-amber-500 text-zinc-950 font-bold text-xs hover:bg-amber-400 transition cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Tự Động Mở Bằng Google Chrome (Android)
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleOpenExternalBrowser}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-zinc-900 border border-amber-500/40 text-amber-300 font-medium text-xs hover:bg-zinc-800 transition cursor-pointer"
+                  >
+                    {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedLink ? 'Đã chép link! Hãy mở Safari dán vào' : 'Sao Chép Link (Để dán vào Safari)'}
+                  </button>
+                )}
               </div>
             )}
 
